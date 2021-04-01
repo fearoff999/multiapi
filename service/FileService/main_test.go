@@ -7,10 +7,10 @@ import (
 )
 
 func TestDirExists(t *testing.T) {
-	if !dirExists("../service/") {
+	if !dirExists("../../service/") {
 		t.Errorf("dirExists fails, cause of '../service/' folder exists")
 	}
-	if dirExists("../service1/") {
+	if dirExists("../../service1/") {
 		t.Errorf("dirExists fails, cause of '../service1/' folder doesnt exists")
 	}
 	func() {
@@ -30,10 +30,10 @@ func TestAssertDir(t *testing.T) {
 	func() {
 		defer func() {
 			if err := recover(); err != nil {
-				t.Errorf("assertDir fails, cause of '../service/ folder exists already")
+				t.Errorf("assertDir fails, cause of '../../service/ folder exists already")
 			}
 		}()
-		AssertDir("../service")
+		AssertDir("../../service")
 	}()
 	func() {
 		defer func() {

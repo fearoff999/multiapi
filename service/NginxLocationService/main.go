@@ -1,9 +1,9 @@
 package NginxLocationService
 
 import (
-	"bytes"
 	"errors"
-	"text/template"
+
+	"github.com/fearoff999/multiapi/utils"
 )
 
 func GenerateLocationOutput(serviceName string, port string) string {
@@ -15,14 +15,12 @@ func GenerateLocationOutput(serviceName string, port string) string {
 location /{{.ServiceName}} {
 	proxy_pass http://{{.ServiceName}}-swagger:{{.Port}};
 }`
-	t := template.Must(template.New("").Parse(tpl))
-	buf := &bytes.Buffer{}
-	t.Execute(buf, struct {
+
+	return utils.ReplaceTpl(tpl, struct {
 		ServiceName string
 		Port        string
 	}{
 		serviceName,
 		port,
 	})
-	return buf.String()
 }

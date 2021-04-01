@@ -1,10 +1,10 @@
 package EnvService
 
 import (
-	"bytes"
 	"regexp"
 	"strings"
-	"text/template"
+
+	"github.com/fearoff999/multiapi/utils"
 )
 
 func replaceExtension(s string) string {
@@ -15,19 +15,16 @@ func replaceExtension(s string) string {
 func buildFilePathsString(filePaths []string) string {
 	elements := []string{}
 	tpl := "{ name: \"{{.Name}}\", url: \"/api/{{.FileName}}\" }"
-	t := template.Must(template.New("").Parse(tpl))
-	buf := &bytes.Buffer{}
 
 	for _, val := range filePaths {
-		t.Execute(buf, struct {
+		res := utils.ReplaceTpl(tpl, struct {
 			Name     string
 			FileName string
 		}{
 			replaceExtension(val),
 			val,
 		})
-		elements = append(elements, buf.String())
-		buf.Reset()
+		elements = append(elements, res)
 	}
 	return "[" + strings.Join(elements, ", ") + "]"
 }
@@ -35,14 +32,11 @@ func buildFilePathsString(filePaths []string) string {
 func GetEnvVariableString(serviceName string, filePaths []string) string {
 	filePathsString := buildFilePathsString(filePaths)
 	tpl := "{{.ServiceName}}_URLS={{.FilePathsString}}"
-	t := template.Must(template.New("").Parse(tpl))
-	buf := &bytes.Buffer{}
-	t.Execute(buf, struct {
+	return utils.ReplaceTpl(tpl, struct {
 		ServiceName     string
 		FilePathsString string
 	}{
 		strings.ToUpper(serviceName),
 		filePathsString,
 	})
-	return buf.String()
 }

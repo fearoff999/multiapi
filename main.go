@@ -1,15 +1,19 @@
 package main
 
 import (
-	"os"
-	"log"
 	"fmt"
+	"log"
+	"os"
+
+	"github.com/fearoff999/multiapi/service/DockerComposeService"
 	"github.com/urfave/cli/v2"
 )
 
 func main() {
+	DockerComposeService.Write()
+	return
 	app := (&cli.App{
-		Name: "multiapi",
+		Name:  "multiapi",
 		Usage: "Swagger-UI nginx+docker-compose wrapper",
 		Action: func(c *cli.Context) error {
 			fmt.Println("Not implemented yet")

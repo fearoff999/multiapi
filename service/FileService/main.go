@@ -18,7 +18,7 @@ func dirExists(path string) bool {
 
 func AssertDir(path string) {
 	if exists := dirExists(path); !exists {
-		err := os.Mkdir(path, 0775)
+		err := os.MkdirAll(path, 0775)
 		if err != nil {
 			panic(err)
 		}

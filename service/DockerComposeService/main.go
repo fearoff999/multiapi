@@ -6,7 +6,7 @@ import (
 
 type dockerCompose struct {
 	Version  string             `yaml:"version"`
-	Services map[string]service `yaml:"services"`
+	Services map[string]Service `yaml:"services"`
 }
 
 type build struct {
@@ -14,18 +14,19 @@ type build struct {
 	Dockerfile string `yaml:"dockerfile"`
 }
 
-type service struct {
-	Build       build             `yaml:"build"`
-	Ports       []string          `yaml:"ports"`
-	DependsOn   []string          `yaml:"depends_on"`
-	Volumes     []string          `yaml:"volumes"`
-	Environment map[string]string `yaml:"environment"`
-	Command     string            `yaml:"command"`
+type Service struct {
+	Build       build             `yaml:"build,omitempty"`
+	Image       string            `yaml:"image,omitempty"`
+	Ports       []string          `yaml:"ports,omitempty"`
+	DependsOn   []string          `yaml:"depends_on,omitempty"`
+	Volumes     []string          `yaml:"volumes,omitempty"`
+	Environment map[string]string `yaml:"environment,omitempty"`
+	Command     string            `yaml:"command,omitempty"`
 }
 
-func BuildDockerCompose(services map[string]service) dockerCompose {
+func BuildDockerCompose(services map[string]Service) dockerCompose {
 	return dockerCompose{
-		Version:  "3.9",
+		Version:  "3.3",
 		Services: services,
 	}
 }

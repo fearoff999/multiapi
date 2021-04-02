@@ -12,17 +12,24 @@ func replaceExtension(s string) string {
 	return r.ReplaceAllLiteralString(s, "")
 }
 
-func buildFilePathsString(filePaths []string) string {
+func replaceDirPath(s string) string {
+	r := regexp.MustCompile(`^.+/`)
+	return r.ReplaceAllLiteralString(s, "")
+}
+
+func buildFilePathsString(filePaths []string, serviceName string) string {
 	elements := []string{}
-	tpl := "{ name: \"{{.Name}}\", url: \"/api/{{.FileName}}\" }"
+	tpl := "{ name: \"{{.Name}}\", url: \"/{{.ServiceName}}/api/{{.FileName}}\" }"
 
 	for _, val := range filePaths {
 		res := utils.ReplaceTpl(tpl, struct {
-			Name     string
-			FileName string
+			Name        string
+			FileName    string
+			ServiceName string
 		}{
-			replaceExtension(val),
-			val,
+			replaceDirPath(replaceExtension(val)),
+			replaceDirPath(val),
+			serviceName,
 		})
 		elements = append(elements, res)
 	}
@@ -30,7 +37,7 @@ func buildFilePathsString(filePaths []string) string {
 }
 
 func GetEnvVariableString(serviceName string, filePaths []string) string {
-	filePathsString := buildFilePathsString(filePaths)
+	filePathsString := buildFilePathsString(filePaths, serviceName)
 	tpl := "{{.ServiceName}}_URLS={{.FilePathsString}}"
 	return utils.ReplaceTpl(tpl, struct {
 		ServiceName     string

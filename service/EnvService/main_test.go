@@ -20,8 +20,8 @@ func TestBuildFilePathsString(t *testing.T) {
 	res := buildFilePathsString([]string{
 		"1.yaml",
 		"Globus.Chat.yaml",
-	})
-	exp := "[{ name: \"1\", url: \"/api/1.yaml\" }, { name: \"Globus.Chat\", url: \"/api/Globus.Chat.yaml\" }]"
+	}, "test")
+	exp := "[{ name: \"1\", url: \"/test/api/1.yaml\" }, { name: \"Globus.Chat\", url: \"/test/api/Globus.Chat.yaml\" }]"
 	if res != exp {
 		t.Errorf("Result \n%v\n not equal to expected \n%v\n", res, exp)
 	}
@@ -32,7 +32,7 @@ func TestGetEnvVariableString(t *testing.T) {
 		"1.yaml",
 		"Globus.Chat.yaml",
 	})
-	exp := "TEST-SERVICE_URLS=[{ name: \"1\", url: \"/api/1.yaml\" }, { name: \"Globus.Chat\", url: \"/api/Globus.Chat.yaml\" }]"
+	exp := "TEST-SERVICE_URLS=[{ name: \"1\", url: \"/test-service/api/1.yaml\" }, { name: \"Globus.Chat\", url: \"/test-service/api/Globus.Chat.yaml\" }]"
 	if res != exp {
 		t.Errorf("Result \n%v\n not equal to expected \n%v\n", res, exp)
 	}

@@ -1,8 +1,8 @@
 package InitializeController
 
 import (
+	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -10,6 +10,7 @@ import (
 	"github.com/fearoff999/multiapi/service/DockerComposeService"
 	"github.com/fearoff999/multiapi/service/EnvService"
 	"github.com/fearoff999/multiapi/service/FileService"
+	"github.com/fearoff999/multiapi/service/FrontendService"
 	"github.com/fearoff999/multiapi/service/InspectDirectoryService"
 	"github.com/fearoff999/multiapi/service/NginxLocationService"
 	"github.com/fearoff999/multiapi/utils"
@@ -43,10 +44,9 @@ func scanDirs() ([]string, map[string][]string) {
 	return directories, files
 }
 
-func writeNginxConfig(name string, port string) {
-	info, err := os.Stat("./basic_auth/." + name)
-	basicAuthString := ""
-	if err == nil && !info.IsDir() {
+func writeNginxConfig(name string, port string, protected bool) {
+	basicAuthString := "auth_basic off;"
+	if protected {
 		basicAuthTpl := `
 	auth_basic "Restricted API";
 	auth_basic_user_file /etc/nginx/basic_auth/.{{.Name}};
@@ -68,6 +68,9 @@ server {
 	listen	[::]:80;
 	server_name localhost;
 
+	auth_basic "Restricted API";
+	auth_basic_user_file /etc/nginx/basic_auth/.root;
+
 	location / {
         root   /usr/share/nginx/html;
         index  index.html index.htm;
@@ -88,6 +91,7 @@ func addSwaggerService(services map[string]DockerComposeService.Service, name st
 		Volumes: []string{
 			"./" + name + ":/usr/share/nginx/html/api",
 		},
+		Restart: "always",
 	}
 
 	return services
@@ -103,6 +107,7 @@ func addNginxService(services map[string]DockerComposeService.Service) map[strin
 	services["nginx"] = DockerComposeService.Service{
 		Image: "nginx:latest",
 		Volumes: []string{
+			"./html/:/usr/share/nginx/html/",
 			"./nginx_config/:/etc/nginx/conf.d/",
 			"./basic_auth/:/etc/nginx/basic_auth/",
 		},
@@ -110,23 +115,48 @@ func addNginxService(services map[string]DockerComposeService.Service) map[strin
 		Ports: []string{
 			"80:80",
 		},
+		Restart: "always",
 	}
 
 	return services
 }
 
+func protectRoot() {
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Print("Input root user: ")
+	user, _ := reader.ReadString('\n')
+	fmt.Print("Input root pass: ")
+	password, _ := reader.ReadString('\n')
+	writeBasicAuthFile("root", strings.ReplaceAll(user, "\n", ""), strings.ReplaceAll(password, "\n", ""))
+}
+
 func Initialize() {
+	_, err := os.Stat("./basic_auth/.root")
+	if err != nil {
+		protectRoot()
+	}
+
 	dirs, files := scanDirs()
 	services := map[string]DockerComposeService.Service{}
+	htmlConfig := map[string]bool{}
 	defaultPort := "8080"
 	envString := ""
 	for _, dir := range dirs {
 		// port := fmt.Sprint(defaultPort + i)
 		services = addSwaggerService(services, dir, defaultPort)
 		envString += EnvService.GetEnvVariableString(dir, files[dir]) + "\n"
-		writeNginxConfig(dir, defaultPort)
+		isProtected := false
+		info, err := os.Stat("./basic_auth/." + dir)
+		if err == nil && !info.IsDir() {
+			isProtected = true
+		}
+		writeNginxConfig(dir, defaultPort, isProtected)
+		htmlConfig[dir] = isProtected
 	}
 	writeDefaultNginxConfig(dirs)
+	htmlOut := FrontendService.GenerateHtml(htmlConfig)
+	FileService.Write("./html/", "index.html", htmlOut)
 	services = addNginxService(services)
 	FileService.Write("./", ".env", envString)
 	dc := DockerComposeService.BuildDockerCompose(services)
@@ -136,6 +166,7 @@ func Initialize() {
 
 func CleanUp() {
 	os.RemoveAll("nginx_config")
+	os.RemoveAll("html")
 	os.Remove("docker-compose.yaml")
 	os.Remove(".env")
 	fmt.Println("Configuration cleanuped successfuly")
@@ -151,10 +182,7 @@ func Unprotect(dirName string) {
 
 func writeBasicAuthFile(dirName string, user string, password string) {
 	FileService.AssertDir("./basic_auth/")
-	_, err := exec.Command("htpasswd", "-mbc", "./basic_auth/."+dirName, user, password).Output()
-	if err != nil {
-		log.Fatal(err)
-	}
+	exec.Command("htpasswd", "-mbc", "./basic_auth/."+dirName, user, password).Output()
 }
 
 func Protect(dirName string, user string, password string) {

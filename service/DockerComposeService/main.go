@@ -22,6 +22,7 @@ type Service struct {
 	Volumes     []string          `yaml:"volumes,omitempty"`
 	Environment map[string]string `yaml:"environment,omitempty"`
 	Command     string            `yaml:"command,omitempty"`
+	Restart     string            `yaml:"restart,omitempty"`
 }
 
 func BuildDockerCompose(services map[string]Service) dockerCompose {

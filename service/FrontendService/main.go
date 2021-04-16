@@ -42,6 +42,7 @@ const scriptTpl = `
                 });
                 document.querySelectorAll('.btn-secondary').forEach(btn => {
                     btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
                         e.preventDefault();
                         copyToClipboard(e.target.href || e.target.parentNode.href);
                     });

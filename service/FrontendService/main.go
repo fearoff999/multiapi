@@ -24,6 +24,9 @@ const scriptTpl = `
                 textArea.focus();
                 textArea.select();
 
+                document.execCommand('copy');
+                console.log(text, 'Copied to clipboard');
+
                 document.body.removeChild(textArea);
             }
             const searchAPIS = (query) => {

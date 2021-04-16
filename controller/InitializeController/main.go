@@ -191,6 +191,7 @@ func removeBasicAuthFileForService(dirName string) {
 
 func Unprotect(dirName string) {
 	removeBasicAuthFileForService(dirName)
+	removeBasicAuthFile(dirName)
 }
 
 func writeBasicAuthFile(dirName string, user string, password string) {

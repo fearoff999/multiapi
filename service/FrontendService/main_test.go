@@ -16,14 +16,14 @@ func Test_getItemBadge(t *testing.T) {
 			args: args{
 				protected: true,
 			},
-			want: `<div class="item__badge item__badge--protected">Protected</div>`,
+			want: `<span class="badge rounded-pill bg-warning"><i class="bi bi-lock"></i></span>`,
 		},
 		{
 			name: "item",
 			args: args{
 				protected: false,
 			},
-			want: `<div class="item__badge item__badge--unprotected">Unprotected</div>`,
+			want: `<span class="badge rounded-pill bg-success"><i class="bi bi-unlock"></i></span>`,
 		},
 	}
 	for _, tt := range tests {
@@ -52,11 +52,15 @@ func Test_generateItem(t *testing.T) {
 				protected:   false,
 			},
 			want: `
-                <div class="item">
-                    <div class="item__name">
-                        <a href="/test/">test</a>
+                <div id="card_test" class="card mb-3">
+                    <div class="card-body">
+                        <h4 class="card-title mb-0">
+                            test
+                            <span class="badge rounded-pill bg-success"><i class="bi bi-unlock"></i></span>
+                            <a href="/test/" class="btn btn-secondary"><i class="bi bi-clipboard"></i></a>
+                            <a href="/test/" class="btn btn-primary"><i class="bi bi-eye"></i></a>
+                        </h4>
                     </div>
-                    <div class="item__badge item__badge--unprotected">Unprotected</div>
                 </div>`,
 		},
 	}
@@ -86,11 +90,15 @@ func Test_generateItems(t *testing.T) {
 				},
 			},
 			want: `
-                <div class="item">
-                    <div class="item__name">
-                        <a href="/test/">test</a>
+                <div id="card_test" class="card mb-3">
+                    <div class="card-body">
+                        <h4 class="card-title mb-0">
+                            test
+                            <span class="badge rounded-pill bg-success"><i class="bi bi-unlock"></i></span>
+                            <a href="/test/" class="btn btn-secondary"><i class="bi bi-clipboard"></i></a>
+                            <a href="/test/" class="btn btn-primary"><i class="bi bi-eye"></i></a>
+                        </h4>
                     </div>
-                    <div class="item__badge item__badge--unprotected">Unprotected</div>
                 </div>`,
 		},
 	}
@@ -123,77 +131,87 @@ func TestGenerateHtml(t *testing.T) {
 <html>
     <head>
         <title>Multiapi available projects</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css">
+        
+        <script>
+            const state = {
+                APIs: [
+                    'card_test',
+                    
+                ],
+            };
+            const copyToClipboard = (text) => {
+                var textArea = document.createElement("textarea");
+                textArea.value = text;
+                
+                // Avoid scrolling to bottom
+                textArea.style.top = "0";
+                textArea.style.left = "0";
+                textArea.style.position = "fixed";
+
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+
+                document.body.removeChild(textArea);
+            }
+            const searchAPIS = (query) => {
+                state.APIs.forEach(it => {
+                    if (!document.getElementById(it).classList.contains('d-none')) {
+                        document.getElementById(it).classList.add('d-none');
+                    }
+                });
+                state.APIs.filter(it => (new RegExp(query, 'i')).test(it)).forEach(it => {
+                    document.getElementById(it).classList.remove('d-none');
+                });
+            }
+            window.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('filterApi').addEventListener('keyup', (e) => {
+                    searchAPIS(e.target.value);
+                });
+                document.querySelectorAll('.btn-secondary').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        copyToClipboard(e.target.href || e.target.parentNode.href);
+                    });
+                });
+            });
+        </script>
+
         <style>
-            
-            .container {
-                display: flex;
-                flex-direction: column;
-                max-width: 1024px;
-                margin: auto;
+            .card {
+                margin-right: 5%;
+                width: 30%;
             }
-
-            .items {
-                display: flex;
-                flex-direction: column;
-            }
-
-            .item {
-                display: flex;
-                background: rgb(243, 240, 214);
-                color: rgb(28, 54, 70);
-                padding: 5px 30px;
-                margin-bottom: 15px;
-                border-radius: 10px;
-                font-weight: 700;
-                font-family: "Roboto Slab", "Times New Roman", serif;
-                font-size: 1em;
-                line-height: 1.55em;
-                align-items: center;
-                justify-content: space-around;
-            }
-
-            .item:nth-child(even) {
-                background: rgb(99, 106, 94);
-                color: #FFFFFF;
-            }
-            .item a {
-                color: rgb(28, 54, 70);
-            }
-            .item:nth-child(even) a {
-                color: #FFFFFF;
-            }
-            .item__name {
-                margin-right: 15px;
-                flex-basis: 70%;
-            }
-            .item__badge {
-                border-radius: 2px;
-                border: 1px solid;
-                padding: 5px 10px;
-                border-radius: 15px;
-                color: #FFFFFF;
-            }
-            .item__badge--protected {
-                border-color: rgb(76, 180, 130);
-                background: light-green;
-                background: rgb(76, 180, 130);
-            }
-            .item__badge--unprotected {
-                border-color: rgb(202, 163, 74);
-                background: rgb(202, 163, 74);
+            .card:nth-child(3n) {
+                margin-right: 0;
             }
         </style>
     </head>
-    <body>
-        <div class="container">
-            <h1>Multiapi available projects</h1>
-            <div class="items">
+    <body class="bg-light">
+        <div class="container pt-3 pb-3">
+            <h1 class="mb-3 mt-3 text-primary">Multiapi available projects</h1>
+            <div class="mb-3">
+                <label for="filterApi" class="form-label">Name of API</label>
+                <input
+                    id="filterApi"
+                    type="email"
+                    class="form-control"
+                    placeholder="some api name here..."
+                >
+            </div>
+            <div class="d-flex flex-wrap justify-content-start">
                 
-                <div class="item">
-                    <div class="item__name">
-                        <a href="/test/">test</a>
+                <div id="card_test" class="card mb-3">
+                    <div class="card-body">
+                        <h4 class="card-title mb-0">
+                            test
+                            <span class="badge rounded-pill bg-success"><i class="bi bi-unlock"></i></span>
+                            <a href="/test/" class="btn btn-secondary"><i class="bi bi-clipboard"></i></a>
+                            <a href="/test/" class="btn btn-primary"><i class="bi bi-eye"></i></a>
+                        </h4>
                     </div>
-                    <div class="item__badge item__badge--unprotected">Unprotected</div>
                 </div>
             </div>
         </div>

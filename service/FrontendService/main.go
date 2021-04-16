@@ -1,90 +1,95 @@
 package FrontendService
 
-import "github.com/fearoff999/multiapi/utils"
+import (
+	"github.com/fearoff999/multiapi/utils"
+)
 
-const styles = `
-            .container {
-                display: flex;
-                flex-direction: column;
-                max-width: 1024px;
-                margin: auto;
-            }
+const scriptTpl = `
+        <script>
+            const state = {
+                APIs: [
+                    {{.ApiCardsId}}
+                ],
+            };
+            const copyToClipboard = (text) => {
+                var textArea = document.createElement("textarea");
+                textArea.value = text;
+                
+                // Avoid scrolling to bottom
+                textArea.style.top = "0";
+                textArea.style.left = "0";
+                textArea.style.position = "fixed";
 
-            .items {
-                display: flex;
-                flex-direction: column;
-            }
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
 
-            .item {
-                display: flex;
-                background: rgb(243, 240, 214);
-                color: rgb(28, 54, 70);
-                padding: 5px 30px;
-                margin-bottom: 15px;
-                border-radius: 10px;
-                font-weight: 700;
-                font-family: "Roboto Slab", "Times New Roman", serif;
-                font-size: 1em;
-                line-height: 1.55em;
-                align-items: center;
-                justify-content: space-around;
+                document.body.removeChild(textArea);
             }
+            const searchAPIS = (query) => {
+                state.APIs.forEach(it => {
+                    if (!document.getElementById(it).classList.contains('d-none')) {
+                        document.getElementById(it).classList.add('d-none');
+                    }
+                });
+                state.APIs.filter(it => (new RegExp(query, 'i')).test(it)).forEach(it => {
+                    document.getElementById(it).classList.remove('d-none');
+                });
+            }
+            window.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('filterApi').addEventListener('keyup', (e) => {
+                    searchAPIS(e.target.value);
+                });
+                document.querySelectorAll('.btn-secondary').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        copyToClipboard(e.target.href || e.target.parentNode.href);
+                    });
+                });
+            });
+        </script>
+`
 
-            .item:nth-child(even) {
-                background: rgb(99, 106, 94);
-                color: #FFFFFF;
-            }
-            .item a {
-                color: rgb(28, 54, 70);
-            }
-            .item:nth-child(even) a {
-                color: #FFFFFF;
-            }
-            .item__name {
-                margin-right: 15px;
-                flex-basis: 70%;
-            }
-            .item__badge {
-                border-radius: 2px;
-                border: 1px solid;
-                padding: 5px 10px;
-                border-radius: 15px;
-                color: #FFFFFF;
-            }
-            .item__badge--protected {
-                border-color: rgb(76, 180, 130);
-                background: light-green;
-                background: rgb(76, 180, 130);
-            }
-            .item__badge--unprotected {
-                border-color: rgb(202, 163, 74);
-                background: rgb(202, 163, 74);
-            }`
+func generateScript(scriptTpl string, services map[string]bool) string {
+	apiCardsId := ""
+	for service := range services {
+		apiCardsId += "'card_" + service + "',\n                    "
+	}
+	return utils.ReplaceTpl(scriptTpl, struct {
+		ApiCardsId string
+	}{
+		ApiCardsId: apiCardsId,
+	})
+}
 
 func getItemBadge(protected bool) string {
-	text := "Protected"
-	cls := "item__badge--protected"
+	icon := "lock"
+	cls := "warning"
 	if !protected {
-		text = "Unprotected"
-		cls = "item__badge--unprotected"
+		icon = "unlock"
+		cls = "success"
 	}
-	badgeTpl := `<div class="item__badge {{.Class}}">{{.Text}}</div>`
+	badgeTpl := `<span class="badge rounded-pill bg-{{.Class}}"><i class="bi bi-{{.Icon}}"></i></span>`
 	return utils.ReplaceTpl(badgeTpl, struct {
 		Class string
-		Text  string
+		Icon  string
 	}{
 		Class: cls,
-		Text:  text,
+		Icon:  icon,
 	})
 }
 
 func generateItem(serviceName string, protected bool) string {
 	itemTpl := `
-                <div class="item">
-                    <div class="item__name">
-                        <a href="/{{.ServiceName}}/">{{.ServiceName}}</a>
+                <div id="card_{{.ServiceName}}" class="card mb-3">
+                    <div class="card-body">
+                        <h4 class="card-title mb-0">
+                            {{.ServiceName}}
+                            {{.ItemBadge}}
+                            <a href="/{{.ServiceName}}/" class="btn btn-secondary"><i class="bi bi-clipboard"></i></a>
+                            <a href="/{{.ServiceName}}/" class="btn btn-primary"><i class="bi bi-eye"></i></a>
+                        </h4>
                     </div>
-                    {{.ItemBadge}}
                 </div>`
 	return utils.ReplaceTpl(itemTpl, struct {
 		ServiceName string
@@ -109,14 +114,32 @@ const htmlSkeleton = `
 <html>
     <head>
         <title>Multiapi available projects</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css">
+        {{.Script}}
         <style>
-            {{.CSS}}
+            .card {
+                margin-right: 5%;
+                width: 30%;
+            }
+            .card:nth-child(3n) {
+                margin-right: 0;
+            }
         </style>
     </head>
-    <body>
-        <div class="container">
-            <h1>Multiapi available projects</h1>
-            <div class="items">
+    <body class="bg-light">
+        <div class="container pt-3 pb-3">
+            <h1 class="mb-3 mt-3 text-primary">Multiapi available projects</h1>
+            <div class="mb-3">
+                <label for="filterApi" class="form-label">Name of API</label>
+                <input
+                    id="filterApi"
+                    type="email"
+                    class="form-control"
+                    placeholder="some api name here..."
+                >
+            </div>
+            <div class="d-flex flex-wrap justify-content-start">
                 {{.Items}}
             </div>
         </div>
@@ -125,10 +148,10 @@ const htmlSkeleton = `
 
 func GenerateHtml(services map[string]bool) string {
 	return utils.ReplaceTpl(htmlSkeleton, struct {
-		CSS   string
-		Items string
+		Script string
+		Items  string
 	}{
-		CSS:   styles,
-		Items: generateItems(services),
+		Script: generateScript(scriptTpl, services),
+		Items:  generateItems(services),
 	})
 }

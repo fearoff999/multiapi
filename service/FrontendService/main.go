@@ -69,17 +69,21 @@ func generateScript(scriptTpl string, services map[string]bool) string {
 func getItemBadge(protected bool) string {
 	icon := "lock"
 	cls := "warning"
+	title := "Protected"
 	if !protected {
 		icon = "unlock"
 		cls = "success"
+		title = "Unprotected"
 	}
-	badgeTpl := `<span class="badge rounded-pill bg-{{.Class}}"><i class="bi bi-{{.Icon}}"></i></span>`
+	badgeTpl := `<span title="{{.Title}}" class="badge rounded-pill bg-{{.Class}}"><i class="bi bi-{{.Icon}}"></i></span>`
 	return utils.ReplaceTpl(badgeTpl, struct {
 		Class string
 		Icon  string
+		Title string
 	}{
 		Class: cls,
 		Icon:  icon,
+		Title: title,
 	})
 }
 
@@ -90,8 +94,8 @@ func generateItem(serviceName string, protected bool) string {
                         <h4 class="card-title mb-0">
                             {{.ServiceName}}
                             {{.ItemBadge}}
-                            <a href="/{{.ServiceName}}/" class="btn btn-secondary"><i class="bi bi-clipboard"></i></a>
-                            <a href="/{{.ServiceName}}/" class="btn btn-primary"><i class="bi bi-eye"></i></a>
+                            <a href="/{{.ServiceName}}/" class="btn btn-secondary" title="Copy to clipboard"><i class="bi bi-clipboard"></i></a>
+                            <a href="/{{.ServiceName}}/" class="btn btn-primary" title="Go to API"><i class="bi bi-eye"></i></a>
                         </h4>
                     </div>
                 </div>`

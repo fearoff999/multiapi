@@ -11,3 +11,12 @@ func ReplaceTpl(tpl string, replacements interface{}) string {
 	t.Execute(buf, replacements)
 	return buf.String()
 }
+
+func Contains(needle string, haystack []string) bool {
+	for _, r := range haystack {
+		if needle == r {
+			return true
+		}
+	}
+	return false
+}

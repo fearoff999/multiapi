@@ -4,9 +4,11 @@ import (
 	"io/ioutil"
 	"regexp"
 	"strings"
+
+	"github.com/fearoff999/multiapi/utils"
 )
 
-func GetDirectories(directoryPath string) []string {
+func GetDirectories(directoryPath string, exclusions []string) []string {
 	files, err := ioutil.ReadDir(directoryPath)
 	if err != nil {
 		panic(err)
@@ -14,7 +16,7 @@ func GetDirectories(directoryPath string) []string {
 
 	res := []string{}
 	for _, f := range files {
-		if f.IsDir() {
+		if f.IsDir() && !utils.Contains(f.Name(), exclusions) {
 			res = append(res, f.Name())
 		}
 	}

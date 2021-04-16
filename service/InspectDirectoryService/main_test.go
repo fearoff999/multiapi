@@ -23,7 +23,7 @@ func TestGetDirectories(t *testing.T) {
 		os.MkdirAll("./tmpDir/a/", 0775)
 		os.MkdirAll("./tmpDir/b/", 0775)
 		os.MkdirAll("./tmpDir/c/", 0775)
-		res := GetDirectories("./tmpDir/")
+		res := GetDirectories("./tmpDir/", []string{})
 		exp := []string{"a", "b", "c"}
 		if strings.Join(res, ",") != strings.Join(exp, ",") {
 			t.Errorf("GetDirectories test returned an unexpected result: got %v want %v", res, exp)
@@ -36,7 +36,7 @@ func TestGetDirectories(t *testing.T) {
 				t.Error("Panic should be invoked")
 			}
 		}()
-		GetDirectories("./tmpDir/")
+		GetDirectories("./tmpDir/", []string{})
 	}()
 }
 

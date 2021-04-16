@@ -14,8 +14,10 @@ import (
 
 func main() {
 	app := (&cli.App{
-		Name:  "multiapi",
-		Usage: "Swagger-UI nginx+docker-compose wrapper",
+		Name:      "multiapi",
+		Usage:     "Swagger-UI nginx+docker-compose wrapper",
+		UsageText: "multiapi command",
+		HideHelp:  true,
 		Commands: []*cli.Command{
 			{
 				Name:    "init",
@@ -68,11 +70,10 @@ func main() {
 			{
 				Name:    "protect",
 				Aliases: []string{"p"},
-				Usage:   "protect #project#",
+				Usage:   "Protect project with htpasswd, creates or recreates new one at /#project#/ folder",
 				Action: func(c *cli.Context) error {
 					reader := bufio.NewReader(os.Stdin)
 
-					fmt.Println("")
 					fmt.Print("Input project: ")
 					dirName, _ := reader.ReadString('\n')
 					fmt.Print("Input user: ")
@@ -91,11 +92,10 @@ func main() {
 			{
 				Name:    "unprotect",
 				Aliases: []string{"u"},
-				Usage:   "uprotect",
+				Usage:   "Uprotect project, removes .httpasswd from /#project#/ folder",
 				Action: func(c *cli.Context) error {
 					reader := bufio.NewReader(os.Stdin)
 
-					fmt.Println("")
 					fmt.Print("Input project: ")
 					dirName, _ := reader.ReadString('\n')
 

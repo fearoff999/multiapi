@@ -3,6 +3,7 @@ package InitializeController
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -22,12 +23,9 @@ func scanDirs() ([]string, map[string][]string) {
 	files := map[string][]string{}
 	directories := []string{}
 
-	scannedDirectories := InspectDirectoryService.GetDirectories(currentDirectory)
+	exclusions := []string{"nginx_config", "basic_auth"}
+	scannedDirectories := InspectDirectoryService.GetDirectories(currentDirectory, exclusions)
 	for _, dirName := range scannedDirectories {
-		if dirName == "nginx_config" {
-			continue
-		}
-
 		currentFiles := InspectDirectoryService.GetFiles(dirName, []string{"yaml", "yml"})
 		if len(currentFiles) == 0 {
 			continue
@@ -137,19 +135,30 @@ func Initialize() {
 		protectRoot()
 	}
 
+	rootHtpasswdContent, err := ioutil.ReadFile("./basic_auth/.root")
+	if err != nil {
+		panic(err)
+	}
+
 	dirs, files := scanDirs()
 	services := map[string]DockerComposeService.Service{}
 	htmlConfig := map[string]bool{}
 	defaultPort := "8080"
 	envString := ""
 	for _, dir := range dirs {
-		// port := fmt.Sprint(defaultPort + i)
 		services = addSwaggerService(services, dir, defaultPort)
 		envString += EnvService.GetEnvVariableString(dir, files[dir]) + "\n"
 		isProtected := false
-		info, err := os.Stat("./basic_auth/." + dir)
+		htpasswdPath := "./" + dir + "/.htpasswd"
+		info, err := os.Stat(htpasswdPath)
 		if err == nil && !info.IsDir() {
 			isProtected = true
+			bacontent, _ := ioutil.ReadFile(htpasswdPath)
+			bastring := string(bacontent)
+			removeBasicAuthFile(dir)
+			file, _ := os.Create("./basic_auth/." + dir)
+			defer file.Close()
+			file.WriteString(bastring + string(rootHtpasswdContent))
 		}
 		writeNginxConfig(dir, defaultPort, isProtected)
 		htmlConfig[dir] = isProtected
@@ -176,8 +185,12 @@ func removeBasicAuthFile(dirName string) {
 	os.Remove("./basic_auth/." + dirName)
 }
 
+func removeBasicAuthFileForService(dirName string) {
+	os.Remove("./" + dirName + "/.htpasswd")
+}
+
 func Unprotect(dirName string) {
-	removeBasicAuthFile(dirName)
+	removeBasicAuthFileForService(dirName)
 }
 
 func writeBasicAuthFile(dirName string, user string, password string) {
@@ -185,6 +198,11 @@ func writeBasicAuthFile(dirName string, user string, password string) {
 	exec.Command("htpasswd", "-mbc", "./basic_auth/."+dirName, user, password).Output()
 }
 
+func writeBasicAuthFileForService(dirName string, user string, password string) {
+	FileService.AssertDir("./" + dirName + "/")
+	exec.Command("htpasswd", "-mbc", "./"+dirName+"/.htpasswd", user, password).Output()
+}
+
 func Protect(dirName string, user string, password string) {
-	writeBasicAuthFile(dirName, user, password)
+	writeBasicAuthFileForService(dirName, user, password)
 }

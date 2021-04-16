@@ -52,6 +52,8 @@ func TestInitialize(t *testing.T) {
 		os.RemoveAll("./nginx_config/")
 		os.Remove(".env")
 		os.Remove("docker-compose.yaml")
+		os.RemoveAll("./html/")
+		os.RemoveAll("./basic_auth")
 	}()
 
 	os.Mkdir("./nginx_config/", 0755)

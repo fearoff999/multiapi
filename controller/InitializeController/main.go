@@ -28,7 +28,7 @@ func scanDirs() ([]string, map[string][]string) {
 			continue
 		}
 
-		currentFiles := InspectDirectoryService.GetFiles(dirName, []string{"yaml", "yml"})
+		currentFiles := InspectDirectoryService.GetFiles(dirName, []string{"yaml", "yml", "json"})
 		if len(currentFiles) == 0 {
 			continue
 		}

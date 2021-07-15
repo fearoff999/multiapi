@@ -155,8 +155,9 @@ func Initialize() {
 		htmlConfig[dir] = isProtected
 	}
 	writeDefaultNginxConfig(dirs)
-	htmlOut := FrontendService.GenerateHtml(htmlConfig)
+	htmlOut, jsOut := FrontendService.GenerateHtml(htmlConfig, files)
 	FileService.Write("./html/", "index.html", htmlOut)
+	FileService.Write("./html/", "app.js", jsOut)
 	services = addNginxService(services)
 	FileService.Write("./", ".env", envString)
 	dc := DockerComposeService.BuildDockerCompose(services)

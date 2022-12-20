@@ -15,7 +15,7 @@ func Run() {
 }
 
 func Stop() {
-	_, err := exec.Command("/bin/bash", "-c", "docker-compose down").Output()
+	_, err := exec.Command("/bin/bash", "-c", "docker-compose down --remove-orphans").Output()
 	if err != nil {
 		log.Fatal(err)
 	}
